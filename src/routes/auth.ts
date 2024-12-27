@@ -38,7 +38,7 @@ export async function authRoutes(app: FastifyInstance) {
 
       reply.cookie('sessionId', sessionId, {
         path: '/',
-        maxAge: 60 * 10, // 6 horas
+        maxAge: 60 * 60 * 6, // 6 horas
       })
 
       await knex('users').where('id', user.id).update('session_id', sessionId)
