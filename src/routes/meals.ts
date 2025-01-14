@@ -57,19 +57,8 @@ export async function mealsRoutes(app: FastifyInstance) {
       preHandler: [isUserLoggedIn],
     },
     async (req, reply) => {
-      const { sessionId } = req.cookies
-
-      const user = await knex('users')
-        .where('session_id', sessionId)
-        .select('id')
-        .first()
-
-      if (!user) {
-        return reply.status(404).send({ message: 'User not found' })
-      }
-
       const meals = await knex('meals_register')
-        .where('user_id', user.id)
+        .where('user_id', req.user?.id)
         .select()
 
       const formattedInfosMeals = meals.map((meal) => {
@@ -79,7 +68,7 @@ export async function mealsRoutes(app: FastifyInstance) {
         }
       })
 
-      return { meals: formattedInfosMeals }
+      return reply.status(200).send({ formattedInfosMeals })
     },
   )
 
@@ -89,17 +78,6 @@ export async function mealsRoutes(app: FastifyInstance) {
       preHandler: [isUserLoggedIn],
     },
     async (req, reply) => {
-      const { sessionId } = req.cookies
-
-      const user = await knex('users')
-        .where('session_id', sessionId)
-        .select('id')
-        .first()
-
-      if (!user) {
-        return reply.status(404).send({ message: 'User not found' })
-      }
-
       const idSchema = z.object({
         id: z.string().uuid(),
       })
@@ -113,7 +91,7 @@ export async function mealsRoutes(app: FastifyInstance) {
       const { id } = data
 
       const meal = await knex('meals_register')
-        .where({ id, user_id: user.id })
+        .where({ id, user_id: req.user?.id })
         .select()
         .first()
 
@@ -162,17 +140,6 @@ export async function mealsRoutes(app: FastifyInstance) {
       preHandler: [isUserLoggedIn],
     },
     async (req, reply) => {
-      const { sessionId } = req.cookies
-
-      const user = await knex('users')
-        .where('session_id', sessionId)
-        .select('id')
-        .first()
-
-      if (!user) {
-        return reply.status(404).send({ message: 'User not found' })
-      }
-
       const idSchema = z.object({
         id: z.string().uuid(),
       })
@@ -186,7 +153,7 @@ export async function mealsRoutes(app: FastifyInstance) {
       const { id } = data
 
       const meal = await knex('meals_register')
-        .where({ id, user_id: user.id })
+        .where({ id, user_id: req.user?.id })
         .select()
         .first()
 
@@ -194,7 +161,12 @@ export async function mealsRoutes(app: FastifyInstance) {
         return reply.status(404).send({ message: 'Meal not found' })
       }
 
-      return reply.status(200).send({ meal })
+      const formattedMeal = {
+        ...meal,
+        datetime: new Date(meal.datetime).toISOString(),
+      }
+
+      return reply.status(200).send({ meal: formattedMeal })
     },
   )
 }
