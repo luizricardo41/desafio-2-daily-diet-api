@@ -155,4 +155,46 @@ export async function mealsRoutes(app: FastifyInstance) {
       return reply.status(201).send({ message: 'Meal Updated' })
     },
   )
+
+  app.get(
+    '/:id',
+    {
+      preHandler: [isUserLoggedIn],
+    },
+    async (req, reply) => {
+      const { sessionId } = req.cookies
+
+      const user = await knex('users')
+        .where('session_id', sessionId)
+        .select('id')
+        .first()
+
+      if (!user) {
+        return reply.status(404).send({ message: 'User not found' })
+      }
+
+      const idSchema = z.object({
+        id: z.string().uuid(),
+      })
+
+      const { success, data, error } = idSchema.safeParse(req.params)
+
+      if (!success) {
+        return reply.status(400).send({ message: error.errors[0].message })
+      }
+
+      const { id } = data
+
+      const meal = await knex('meals_register')
+        .where({ id, user_id: user.id })
+        .select()
+        .first()
+
+      if (!meal) {
+        return reply.status(404).send({ message: 'Meal not found' })
+      }
+
+      return reply.status(200).send({ meal })
+    },
+  )
 }
