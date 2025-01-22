@@ -170,6 +170,49 @@ export async function mealsRoutes(app: FastifyInstance) {
     },
   )
 
+  app.get(
+    '/metrics',
+    {
+      preHandler: [isUserLoggedIn],
+    },
+    async (req, reply) => {
+      const meals = await knex('meals_register')
+        .where({ user_id: req.user?.id })
+        .select()
+
+      if (!meals) {
+        return reply
+          .status(404)
+          .send({ message: 'Meal not found for this user' })
+      }
+
+      const quantityMeals = meals.length
+      let quantityMealsIntoDiet = 0
+      let quantityMealsOutDiet = 0
+      let bestSequenceInDiet = 0
+      let auxSequence = 0
+
+      for (const meal of meals) {
+        if (meal.is_diet) {
+          quantityMealsIntoDiet += 1
+          auxSequence += 1
+        }
+        if (!meal.is_diet) {
+          quantityMealsOutDiet += 1
+          auxSequence = 0
+        }
+        if (auxSequence > bestSequenceInDiet) bestSequenceInDiet = auxSequence
+      }
+
+      return reply.status(200).send({
+        quantityMeals,
+        quantityMealsIntoDiet,
+        quantityMealsOutDiet,
+        bestSequenceInDiet,
+      })
+    },
+  )
+
   app.delete(
     '/:id',
     {
