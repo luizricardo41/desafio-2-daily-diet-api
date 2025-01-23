@@ -1,5 +1,7 @@
 node_modules
 .vscode
+.env.test
 .env
 build
 db/app.db
+db/test.db
