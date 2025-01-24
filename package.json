@@ -7,7 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "knex": "node --no-warnings --loader tsx ./node_modules/.bin/knex",
     "lint": "eslint src --ext .ts --fix",
-    "test": "vitest"
+    "test": "vitest --no-file-parallelism"
   },
   "keywords": [],
   "author": "",
