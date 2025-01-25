@@ -47,7 +47,7 @@ export async function mealsRoutes(app: FastifyInstance) {
         is_diet: isDiet,
       })
 
-      return reply.status(201).send()
+      return reply.status(201).send({ message: 'Meal created!' })
     },
   )
 
