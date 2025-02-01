@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import request from 'supertest'
 import { app } from '../app'
 import { execSync } from 'node:child_process'
+import { mockMeals } from './mocks/MockMeals'
 
 describe('Meals Route', () => {
   beforeAll(async () => {
@@ -139,5 +140,30 @@ describe('Meals Route', () => {
       .expect(404)
 
     expect(getOneMeal.body.message).toEqual('Meal not found')
+  })
+
+  it('should be able to return meals metrics', async () => {
+    const login = await request(app.server).post('/auth/login').send({
+      email: 'jhon.doe@email.com',
+      password: 'jh0nDo3',
+    })
+
+    let cookies = login.get('Set-Cookie')
+    cookies = cookies || ['']
+
+    for (const meal of mockMeals) {
+      await request(app.server).post('/meal').set('Cookie', cookies).send(meal)
+    }
+
+    const metrics = await request(app.server)
+      .get('/meal/metrics')
+      .set('Cookie', cookies)
+      .expect(200)
+
+    console.log(metrics)
+    expect(metrics.body.quantityMeals).toEqual(mockMeals.length)
+    expect(metrics.body.quantityMealsIntoDiet).toEqual(3)
+    expect(metrics.body.quantityMealsOutDiet).toEqual(2)
+    expect(metrics.body.bestSequenceInDiet).toEqual(2)
   })
 })
