@@ -74,7 +74,7 @@ describe('Meals Route', () => {
     expect(response.body.formattedInfosMeals[0]).toHaveProperty('name')
   })
 
-  it('should get a meal for the user', async () => {
+  it('should get a meal by id', async () => {
     const login = await request(app.server).post('/auth/login').send({
       email: 'jhon.doe@email.com',
       password: 'jh0nDo3',
@@ -107,7 +107,7 @@ describe('Meals Route', () => {
     expect(getOneMeal.body.meal).toHaveProperty('name')
   })
 
-  it('should delete a meal for the user', async () => {
+  it('should delete a meal by id', async () => {
     const login = await request(app.server).post('/auth/login').send({
       email: 'jhon.doe@email.com',
       password: 'jh0nDo3',
@@ -142,6 +142,44 @@ describe('Meals Route', () => {
     expect(getOneMeal.body.message).toEqual('Meal not found')
   })
 
+  it('should be update a meal by id', async () => {
+    const login = await request(app.server).post('/auth/login').send({
+      email: 'jhon.doe@email.com',
+      password: 'jh0nDo3',
+    })
+
+    let cookies = login.get('Set-Cookie')
+    cookies = cookies || ['']
+
+    await request(app.server).post('/meal').set('Cookie', cookies).send({
+      name: 'Café da manhã',
+      description: 'Pão com ovo mexido',
+      datetime: '2025-01-14 04:30:00',
+      isDiet: true,
+    })
+
+    const getAllMeals = await request(app.server)
+      .get('/meal')
+      .set('Cookie', cookies)
+
+    const idMeal = getAllMeals.body.formattedInfosMeals[0].id
+
+    await request(app.server)
+      .put(`/meal/${idMeal}`)
+      .set('Cookie', cookies)
+      .send({ description: 'Crepioca' })
+      .expect(201)
+
+    const getOneMeal = await request(app.server)
+      .get(`/meal/${idMeal}`)
+      .set('Cookie', cookies)
+      .expect(200)
+
+    expect(getOneMeal.body).toHaveProperty('meal')
+    expect(getOneMeal.body.meal.description).toEqual('Crepioca')
+    expect(getOneMeal.body.meal.id).toEqual(idMeal)
+  })
+
   it('should be able to return meals metrics', async () => {
     const login = await request(app.server).post('/auth/login').send({
       email: 'jhon.doe@email.com',
@@ -160,7 +198,6 @@ describe('Meals Route', () => {
       .set('Cookie', cookies)
       .expect(200)
 
-    console.log(metrics)
     expect(metrics.body.quantityMeals).toEqual(mockMeals.length)
     expect(metrics.body.quantityMealsIntoDiet).toEqual(3)
     expect(metrics.body.quantityMealsOutDiet).toEqual(2)
